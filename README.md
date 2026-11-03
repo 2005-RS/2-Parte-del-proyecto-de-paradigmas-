@@ -83,14 +83,21 @@ npm test
 
 ## Imágenes en Docker Hub
 
-El Compose construye y etiqueta:
+Publicadas y públicas en la cuenta `2005rs`, etiqueta `1.0.0`:
 
-- `profelink/profelink-auth:1.0.0`
-- `profelink/profelink-activities:1.0.0`
-- `profelink/profelink-web:1.0.0`
-- `profelink/profelink-demo:1.0.0`
+- https://hub.docker.com/r/2005rs/profelink-auth
+- https://hub.docker.com/r/2005rs/profelink-activities
+- https://hub.docker.com/r/2005rs/profelink-web
+- https://hub.docker.com/r/2005rs/profelink-demo
 
-Cambia `DOCKERHUB_NAMESPACE` e `IMAGE_TAG` en `.env`, inicia sesión y publica:
+```powershell
+docker pull 2005rs/profelink-auth:1.0.0
+docker pull 2005rs/profelink-activities:1.0.0
+docker pull 2005rs/profelink-web:1.0.0
+docker pull 2005rs/profelink-demo:1.0.0
+```
+
+El Compose usa `DOCKERHUB_NAMESPACE` (en este equipo, `2005rs`) e `IMAGE_TAG`. Para volver a publicar:
 
 ```powershell
 docker login
