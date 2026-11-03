@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: ProfeLink
+    orgId: 1
+    folder: ProfeLink
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

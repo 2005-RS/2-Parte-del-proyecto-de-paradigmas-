@@ -1,0 +1,19 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$AUTH_DOMAIN} {
+	reverse_proxy auth-api:3001
+}
+
+{$ACTIVITIES_DOMAIN} {
+	reverse_proxy activities-api:3002
+}
+
+{$WEB_DOMAIN} {
+	reverse_proxy web:80
+}
+
+{$DEMO_DOMAIN} {
+	reverse_proxy demo-client:80
+}

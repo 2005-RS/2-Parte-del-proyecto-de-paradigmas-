@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cliente adicional · ProfeLink</title>
+    <script src="/config.js"></script>
+    <style>
+      :root { color-scheme: light; font-family: "Segoe UI", sans-serif; color: #2a1248; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 12% 18%, rgba(255, 166, 2, 0.35), transparent 26%),
+          radial-gradient(circle at 90% 80%, rgba(19, 104, 206, 0.35), transparent 28%),
+          linear-gradient(160deg, #46178f, #2d0b66);
+      }
+      main { width: min(820px, calc(100% - 28px)); margin: 28px auto 48px; }
+      h1 { letter-spacing: -0.04em; margin-bottom: 8px; color: white; font-size: clamp(2rem, 5vw, 3.2rem); }
+      p { color: #f3e9ff; }
+      form, pre { background: white; border-radius: 24px; padding: 18px; box-shadow: 0 14px 0 rgba(0, 0, 0, 0.12); }
+      label { display: grid; gap: 6px; font-weight: 750; margin-bottom: 12px; }
+      input { padding: 14px; border-radius: 14px; border: 2px solid #efe6f7; font: inherit; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; }
+      button, .aula {
+        border: 0; border-radius: 16px; min-height: 56px; padding: 0 22px;
+        background: #26890c; color: white; cursor: pointer; font: inherit; font-weight: 800; font-size: 1.05rem;
+        box-shadow: 0 8px 0 #145206; text-decoration: none; display: inline-flex; align-items: center;
+        transition: transform 0.08s ease;
+      }
+      button:hover, .aula:hover { transform: translateY(-3px); }
+      button:active, .aula:active { transform: translateY(4px); box-shadow: 0 3px 0 #145206; }
+      #results { background: #1368ce; box-shadow: 0 8px 0 #0c4b96; }
+      .error { background: #fff4ef; border: 1px solid #f0c4c1; color: #6d241f; border-radius: 12px; padding: 12px; }
+      pre { overflow: auto; }
+      .hero { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="hero">
+        <div>
+          <h1>Cliente adicional</h1>
+          <p>La partida con botones, temporizador y clasificación está en el aula. Aquí solo se consulta la API.</p>
+        </div>
+        <a class="aula" id="aula" href="http://localhost:8080">Jugar en el aula</a>
+      </div>
+      <form id="login">
+        <label>Correo <input id="email" type="email" value="demo@profelink.dev" required /></label>
+        <label>Contraseña <input id="password" type="password" value="Demo1234!" required /></label>
+        <button>Entrar por la API</button>
+      </form>
+      <form id="lookup">
+        <label>Código de sala <input id="code" minlength="6" maxlength="6" required /></label>
+        <div class="row">
+          <button type="submit">Consultar sesión</button>
+          <button type="button" id="results">Consultar resultados</button>
+        </div>
+      </form>
+      <div id="message"></div>
+      <pre id="output">Aún no hay una consulta.</pre>
+    </main>
+    <script>
+      const config = window.__APP_CONFIG__;
+      if (config.webUrl) document.querySelector('#aula').href = config.webUrl;
+      const message = document.querySelector('#message');
+      const output = document.querySelector('#output');
+      let token = sessionStorage.getItem('demo.token') || '';
+
+      function showError(text) {
+        message.innerHTML = '<div class="error">' + text + '</div>';
+      }
+
+      async function call(base, path, options) {
+        const headers = new Headers(options && options.headers);
+        if (options && options.body) headers.set('Content-Type', 'application/json');
+        if (token) headers.set('Authorization', 'Bearer ' + token);
+        const response = await fetch(base + path, { ...options, headers });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error((data && data.message) || 'La API rechazó la consulta.');
+        return data;
+      }
+
+      document.querySelector('#login').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        message.innerHTML = '';
+        try {
+          const data = await call(config.authUrl, '/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: document.querySelector('#email').value,
+              password: document.querySelector('#password').value
+            })
+          });
+          token = data.accessToken;
+          sessionStorage.setItem('demo.token', token);
+          output.textContent = 'Sesión iniciada como ' + data.user.displayName + '. El token sirve para activities-api.';
+        } catch (error) {
+          showError(error.message || 'Sin conexión con el servicio de identidad.');
+        }
+      });
+
+      async function load(path) {
+        message.innerHTML = '';
+        if (!token) {
+          showError('Primero inicia sesión en el servicio de identidad.');
+          return;
+        }
+        const code = document.querySelector('#code').value.trim().toUpperCase();
+        try {
+          const data = await call(config.activitiesUrl, path.replace(':code', code));
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          showError(error.message || 'No se pudo consultar la sala.');
+        }
+      }
+
+      document.querySelector('#lookup').addEventListener('submit', (event) => {
+        event.preventDefault();
+        load('/sessions/:code');
+      });
+      document.querySelector('#results').addEventListener('click', () => load('/sessions/:code/results'));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,113 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Quiz {
+  id          String        @id @db.Uuid
+  ownerId     String        @map("owner_id") @db.Uuid
+  ownerName   String        @map("owner_name")
+  title       String
+  description String        @default("")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  questions   Question[]
+  sessions    GameSession[]
+
+  @@index([ownerId])
+  @@map("quizzes")
+}
+
+model Question {
+  id               String @id @db.Uuid
+  quizId           String @map("quiz_id") @db.Uuid
+  quiz             Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  prompt           String
+  correctAnswer    Boolean @map("correct_answer")
+  imagePath        String? @map("image_path")
+  timeLimitSeconds Int     @default(20) @map("time_limit_seconds")
+  orderIndex       Int     @map("order_index")
+
+  @@index([quizId, orderIndex])
+  @@map("questions")
+}
+
+model GameSession {
+  id                   String            @id @db.Uuid
+  quizId               String?           @map("quiz_id") @db.Uuid
+  quiz                 Quiz?             @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  hostId               String            @map("host_id") @db.Uuid
+  hostName             String            @map("host_name")
+  code                 String            @unique
+  status               SessionStatus     @default(lobby)
+  currentQuestionIndex Int               @default(-1) @map("current_question_index")
+  questionOpenedAt     DateTime?         @map("question_opened_at")
+  questionClosesAt     DateTime?         @map("question_closes_at")
+  quizTitle            String            @map("quiz_title")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  finishedAt           DateTime?         @map("finished_at")
+  questions            SessionQuestion[]
+  players              SessionPlayer[]
+  answers              Answer[]
+
+  @@index([hostId])
+  @@map("game_sessions")
+}
+
+model SessionQuestion {
+  id               String      @id @db.Uuid
+  sessionId        String      @map("session_id") @db.Uuid
+  session          GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  prompt           String
+  correctAnswer    Boolean     @map("correct_answer")
+  imagePath        String?     @map("image_path")
+  timeLimitSeconds Int         @map("time_limit_seconds")
+  orderIndex       Int         @map("order_index")
+  answers          Answer[]
+
+  @@index([sessionId, orderIndex])
+  @@map("session_questions")
+}
+
+model SessionPlayer {
+  id          String      @id @db.Uuid
+  sessionId   String      @map("session_id") @db.Uuid
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String      @map("user_id") @db.Uuid
+  displayName String      @map("display_name")
+  score       Int         @default(0)
+  joinedAt    DateTime    @default(now()) @map("joined_at")
+
+  @@unique([sessionId, userId])
+  @@map("session_players")
+}
+
+model Answer {
+  id         String          @id @db.Uuid
+  sessionId  String          @map("session_id") @db.Uuid
+  session    GameSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId String          @map("question_id") @db.Uuid
+  question   SessionQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userId     String          @map("user_id") @db.Uuid
+  value      Boolean
+  isCorrect  Boolean         @map("is_correct")
+  points     Int
+  answeredAt DateTime        @default(now()) @map("answered_at")
+
+  @@unique([sessionId, questionId, userId])
+  @@map("answers")
+}
+
+enum SessionStatus {
+  lobby
+  question_open
+  question_closed
+  finished
+
+  @@map("session_status")
+}
