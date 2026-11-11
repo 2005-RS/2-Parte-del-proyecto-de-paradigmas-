@@ -182,3 +182,16 @@ Al reconectar, el cliente vuelve a emitir `session.watch` o `session.join` y, si
 ## Observabilidad
 
 Cada API arranca el SDK de OpenTelemetry y exporta trazas y métricas al collector. Prometheus lee al collector y Grafana muestra solicitudes HTTP, respuestas aceptadas o rechazadas, conexiones WebSocket y salas iniciadas.
+
+## Despliegue
+
+La clase usa el VPS de Hetzner Cloud llamado Proyecto-paradigmas, hostname `profelink`, en Helsinki, Ubuntu 24.04, tipo CPX22. La IPv4 es `157.180.79.235`.
+
+| Uso | Dirección |
+|---|---|
+| Aula | http://157.180.79.235:8080 |
+| Cliente adicional | http://157.180.79.235:8081 |
+| Identidad | http://157.180.79.235:3001 |
+| Actividades y WebSocket | http://157.180.79.235:3002 |
+
+El navegador habla con esas URLs. Dentro de Docker, `activities-api` lee las llaves en `http://auth-api:3001/.well-known/jwks.json`. El detalle de `.env`, imágenes y arranque está en el README.

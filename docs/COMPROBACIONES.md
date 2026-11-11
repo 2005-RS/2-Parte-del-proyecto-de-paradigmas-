@@ -19,7 +19,7 @@ La evidencia automática de la partida se obtiene con la solución levantada:
 
 Ejecución del 2 de noviembre de 2026, con Compose en esta máquina: el script terminó sin errores. Cubrió login demo, registro, 403 al editar un cuestionario ajeno, creación de preguntas, PNG público, sala sin participantes, reconexión sin duplicar el puesto, respuesta oculta hasta el cierre, 409 en reenvío y en respuesta tardía, un punto en la clasificación y una segunda sala con puntaje 0.
 
-La interfaz en http://localhost:8080 también se recorrió: login de `demo@profelink.dev`, editor de **Paradigmas en el aula**, sala `DFCE67`, unión desde otra pestaña, pregunta en vivo, respuesta Verdadero y revelado con 1 punto en anfitrión y participante.
+El 11 de noviembre de 2026 el aula publicado en http://157.180.79.235:8080 sirve la interfaz de la clase. El profesor entra con `ronny.salas@profelink.dev` y el nombre de la sala es Ronny Salas. Un QR como http://157.180.79.235:8080/jugar?pin=ABC234 pide solo el nombre y el botón es **Entrar a la partida**. El cliente adicional en http://157.180.79.235:8081 responde. `auth-api` publica las llaves en el puerto 3001 y `activities-api` responde en el 3002. Esa pasada no incluye todavía la partida con varios celulares de la clase.
 
 Las reglas de dominio también corren sin Docker:
 
