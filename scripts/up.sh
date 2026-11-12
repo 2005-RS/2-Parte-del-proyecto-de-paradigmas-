@@ -12,4 +12,4 @@ fi
 docker compose --env-file .env up -d --build
 echo "Aula: http://localhost:8080"
 echo "Cliente adicional: http://localhost:8081"
-echo "Cuenta demo: demo@profelink.dev / Demo1234!"
+echo "Cuenta del profesor: ronny.salas@profelink.dev / Demo1234!"

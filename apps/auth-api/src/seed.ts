@@ -13,18 +13,18 @@ async function main(): Promise<void> {
   await prisma.user.upsert({
     where: { id: DEMO_USER_ID },
     update: {
-      email: 'demo@profelink.dev',
-      displayName: 'Profe Demo',
+      email: 'ronny.salas@profelink.dev',
+      displayName: 'Ronny Salas',
       passwordHash,
     },
     create: {
       id: DEMO_USER_ID,
-      email: 'demo@profelink.dev',
-      displayName: 'Profe Demo',
+      email: 'ronny.salas@profelink.dev',
+      displayName: 'Ronny Salas',
       passwordHash,
     },
   });
-  console.log('Perfil demo listo: demo@profelink.dev');
+  console.log('Perfil listo: ronny.salas@profelink.dev');
 }
 
 main()

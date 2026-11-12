@@ -32,5 +32,5 @@ Write-Host "Cliente adicional: http://localhost:$demo"
 Write-Host "Docs de identidad: http://localhost:$auth/docs"
 Write-Host "Docs de actividades: http://localhost:$activities/docs"
 Write-Host "Grafana:           http://localhost:$grafana"
-Write-Host 'Cuenta demo:       demo@profelink.dev / Demo1234!'
+Write-Host 'Cuenta del profesor: ronny.salas@profelink.dev / Demo1234!'
 Write-Host 'Para detener sin borrar datos: .\scripts\down.ps1'

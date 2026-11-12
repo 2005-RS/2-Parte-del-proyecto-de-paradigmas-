@@ -55,8 +55,8 @@ function Assert-Ok($result, [string]$label) {
   Write-Host "OK  $label"
 }
 
-$demo = Invoke-Json POST "$authBase/auth/login" $null @{ email = 'demo@profelink.dev'; password = 'Demo1234!' }
-Assert-Ok $demo 'entra la cuenta demo'
+$demo = Invoke-Json POST "$authBase/auth/login" $null @{ email = 'ronny.salas@profelink.dev'; password = 'Demo1234!' }
+Assert-Ok $demo 'entra la cuenta del profesor'
 $teacher = $demo.Data.accessToken
 
 $suffix = [guid]::NewGuid().ToString('N').Substring(0, 8)

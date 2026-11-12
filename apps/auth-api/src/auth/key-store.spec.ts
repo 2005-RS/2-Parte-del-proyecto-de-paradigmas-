@@ -30,8 +30,8 @@ describe('KeyStore', () => {
     const keys = await store();
     const token = await keys.sign({
       id: '11111111-1111-4111-8111-111111111111',
-      email: 'demo@profelink.dev',
-      displayName: 'Profe Demo',
+      email: 'ronny.salas@profelink.dev',
+      displayName: 'Ronny Salas',
     });
     const payload = jwt.verify(token, keys.publicPem, {
       issuer: 'profelink-auth',
@@ -40,15 +40,15 @@ describe('KeyStore', () => {
     if (typeof payload === 'string') throw new Error('payload');
     expect(payload.aud).toBe('activities-api');
     expect(payload.sub).toBe('11111111-1111-4111-8111-111111111111');
-    expect(payload.name).toBe('Profe Demo');
+    expect(payload.name).toBe('Ronny Salas');
   });
 
   it('rechaza el token cuando la audiencia no es activities-api', async () => {
     const keys = await store();
     const token = await keys.sign({
       id: '11111111-1111-4111-8111-111111111111',
-      email: 'demo@profelink.dev',
-      displayName: 'Profe Demo',
+      email: 'ronny.salas@profelink.dev',
+      displayName: 'Ronny Salas',
     });
     expect(() =>
       jwt.verify(token, keys.publicPem, {
@@ -62,8 +62,8 @@ describe('KeyStore', () => {
     const first = await store();
     const token = await first.sign({
       id: '11111111-1111-4111-8111-111111111111',
-      email: 'demo@profelink.dev',
-      displayName: 'Profe Demo',
+      email: 'ronny.salas@profelink.dev',
+      displayName: 'Ronny Salas',
     });
     const second = new KeyStore({
       dir,

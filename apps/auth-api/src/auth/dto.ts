@@ -20,7 +20,7 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ example: 'demo@profelink.dev' })
+  @ApiProperty({ example: 'ronny.salas@profelink.dev' })
   @IsEmail()
   email!: string;
 

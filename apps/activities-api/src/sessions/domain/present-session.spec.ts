@@ -6,7 +6,7 @@ function snapshot(overrides: Partial<SessionSnapshot> = {}): SessionSnapshot {
     status: 'question_open',
     quizTitle: 'Paradigmas',
     hostId: 'host',
-    hostName: 'Profe Demo',
+    hostName: 'Ronny Salas',
     currentQuestionIndex: 0,
     questionOpenedAt: '2026-11-02T12:00:00.000Z',
     questionClosesAt: '2026-11-02T12:00:20.000Z',

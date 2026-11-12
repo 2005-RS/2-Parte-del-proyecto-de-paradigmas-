@@ -51,7 +51,7 @@ En bash: `./scripts/up.sh` y `./scripts/down.sh`.
 | Nombre | Ronny Salas |
 | Correo | `ronny.salas@profelink.dev` |
 | Contraseña | `Demo1234!` |
-| Cuestionario | Paradigmas en el aula, cuatro preguntas y una imagen |
+| Cuestionario | Paradigmas en el aula, doce preguntas y una imagen |
 
 Con `SEED=true`, cada arranque deja esa contraseña lista. El cuestionario se crea solo la primera vez.
 
