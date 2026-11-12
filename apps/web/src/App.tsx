@@ -15,7 +15,7 @@ export function App() {
         <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
         <Route path="/quizzes/nuevo" element={<RequireAuth><NewQuizPage /></RequireAuth>} />
         <Route path="/quizzes/:id" element={<RequireAuth><EditorPage /></RequireAuth>} />
-        <Route path="/jugar" element={<RequireAuth><JoinPage /></RequireAuth>} />
+        <Route path="/jugar" element={<JoinPage />} />
         <Route path="/jugar/:code" element={<RequireAuth><PlayPage /></RequireAuth>} />
         <Route path="/sala/:code" element={<RequireAuth><HostPage /></RequireAuth>} />
         <Route path="/historial" element={<RequireAuth><HistoryPage /></RequireAuth>} />
@@ -44,9 +44,12 @@ function Shell() {
           </Link>
           {user && (
             <div className="top-actions">
-              <span className="who you-chip">
-                <Character name={user.displayName} size={36} />
-                {user.displayName}
+              <span className="who you-chip player-card">
+                <Character name={user.displayName} size={40} />
+                <span className="player-id">
+                  <strong>{user.displayName}</strong>
+                  <small>Anfitrión</small>
+                </span>
               </span>
               <Link className="nav-pill" to="/jugar">Unirme</Link>
               <Link className="nav-pill" to="/historial">Partidas</Link>

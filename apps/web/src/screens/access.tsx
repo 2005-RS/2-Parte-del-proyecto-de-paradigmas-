@@ -56,8 +56,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from || '/';
-  const [email, setEmail] = useState('demo@profelink.dev');
-  const [password, setPassword] = useState('Demo1234!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -80,22 +80,22 @@ export function LoginPage() {
     <GateFrame
       kicker="Navidad en el aula"
       title="Entra al aula"
-      lede="Link te abre la puerta. Entra y elige la actividad de tu academia."
+      lede="Esta puerta es para quien organiza la clase. Si vas a jugar, crea tu perfil."
     >
       <form className="form" onSubmit={onSubmit}>
         {error && <div className="banner">{error}</div>}
         <label>
           Correo
-          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ronny.salas@profelink.dev" autoComplete="username" required />
         </label>
         <label>
           Contraseña
-          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Tu clave" autoComplete="current-password" required />
         </label>
         <motion.button className="btn" type="submit" disabled={pending} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96, y: 4 }}>
           {pending ? 'Entrando…' : 'Entrar'}
         </motion.button>
-        <Link to="/registro">Crear un perfil</Link>
+        <Link className="gate-switch" to="/registro">No tengo perfil. Quiero crear uno</Link>
       </form>
     </GateFrame>
   );
@@ -129,26 +129,26 @@ export function RegisterPage() {
     <GateFrame
       kicker="Nuevo jugador"
       title="Nuevo perfil"
-      lede="Crea tu perfil, elige avatar con tu nombre y entra a la sala del profesor."
+      lede="El nombre es el que aparece en la sala. El correo y la clave sirven para volver a entrar."
     >
       <form className="form" onSubmit={onSubmit}>
         {error && <div className="banner">{error}</div>}
         <label>
-          Nombre visible
-          <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} minLength={2} required />
+          Tu nombre
+          <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} minLength={2} maxLength={40} placeholder="Ana Rojas" autoFocus required />
         </label>
         <label>
           Correo
-          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ana@correo.com" autoComplete="email" required />
         </label>
         <label>
           Contraseña
-          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required />
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} placeholder="Mínimo 8 caracteres" autoComplete="new-password" required />
         </label>
         <motion.button className="btn" type="submit" disabled={pending} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96, y: 4 }}>
           {pending ? 'Creando…' : 'Crear perfil'}
         </motion.button>
-        <Link to="/entrar">Ya tengo perfil</Link>
+        <Link className="gate-switch" to="/entrar">Ya tengo perfil</Link>
       </form>
     </GateFrame>
   );

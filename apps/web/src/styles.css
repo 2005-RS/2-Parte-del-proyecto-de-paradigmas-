@@ -294,9 +294,26 @@ textarea { min-height: 90px; resize: vertical; }
   box-shadow: 0 18px 0 rgba(0, 0, 0, 0.12);
   animation: slam 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.pin-card { text-align: center; }
+.pin-card { text-align: center; color: #10203a; }
+.name-join { display: grid; justify-items: center; gap: 8px; }
+.name-join h1 { color: #10203a; margin: 0; }
+.name-join label { color: #10203a; font-weight: 800; font-size: 1rem; text-align: left; width: 100%; }
+.name-join input {
+  color: #10203a;
+  background: white;
+  border: 2px solid #8aa0bd;
+  min-height: 56px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: center;
+}
+.name-join .lede { color: #3d5270; text-transform: none; letter-spacing: 0; font-weight: 650; }
 .pin-card p, .q-kicker { margin: 0; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #5d7194; }
 .pin { color: #10203a; }
+.pin span { display: inline-block; min-width: 0.45em; }
+.scene .player-card, .stage .player-card { background: rgba(255, 255, 255, 0.12); color: white; }
+.q-screen .player-card { background: white; color: #1d2433; border-color: rgba(0, 0, 0, 0.08); }
+.q-screen .play-top .player-id strong { color: #1d2433; }
 .host-bar, .play-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
 .exit {
   color: white;
@@ -397,8 +414,39 @@ textarea { min-height: 90px; resize: vertical; }
 }
 .gate-card h1 { color: white; margin-top: 4px; }
 .gate-card .lede { color: #d5e4f7; margin: 0 auto 14px; }
-.gate-card .form { text-align: left; }
-.gate-card label { color: #dbeafe; }
+.gate-card .form {
+  text-align: left;
+  background: #fffdf8;
+  color: #10203a;
+  border: 0;
+  box-shadow: none;
+}
+.gate-card label {
+  color: #10203a;
+  font-weight: 800;
+  font-size: 1rem;
+}
+.gate-card input {
+  color: #10203a;
+  background: white;
+  border: 2px solid #8aa0bd;
+  min-height: 52px;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+.gate-card input::placeholder { color: #7d8da3; font-weight: 600; }
+.gate-help { margin: 0 0 8px; color: #3d5270; font-size: 0.92rem; }
+.gate-switch {
+  display: block;
+  text-align: center;
+  margin-top: 4px;
+  color: #1d4ed8;
+  background: #e7f0ff;
+  border-radius: 999px;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-weight: 800;
+}
 .gate-lights {
   display: flex;
   justify-content: space-between;
@@ -422,6 +470,7 @@ textarea { min-height: 90px; resize: vertical; }
   box-shadow: 0 8px 0 #1e3a8a;
 }
 .gate a { color: #f6b73c; font-weight: 800; }
+.gate .gate-switch { color: #1d4ed8; }
 .quiz-card { position: relative; overflow: hidden; }
 .quiz-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--kahoot-red); }
 .quiz-card:nth-child(2n)::before { background: var(--kahoot-blue); }
@@ -535,6 +584,15 @@ textarea { min-height: 90px; resize: vertical; }
 .roster-empty { text-align: center; font-size: 1.2rem; opacity: 0.9; }
 .character { display: block; border-radius: 50%; }
 .you-chip { display: inline-flex; align-items: center; gap: 8px; }
+.player-card {
+  background: rgba(8, 18, 36, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 4px 14px 4px 4px;
+}
+.player-id { display: flex; flex-direction: column; line-height: 1.05; }
+.player-id strong { font-size: 0.95rem; }
+.player-id small { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; font-weight: 800; }
 .scene-actions {
   position: fixed;
   right: 22px;
@@ -696,13 +754,17 @@ textarea { min-height: 90px; resize: vertical; }
 .q-ask { text-align: center; padding: 72px 18px 8px; }
 .q-ask p { margin: 0; font-weight: 800; letter-spacing: 0.04em; color: #777; }
 .q-ask h1 {
-  margin: 8px auto 0;
+  margin: 10px auto 0;
   max-width: 18em;
-  color: #3d3d3d;
+  color: #1d2433;
+  background: white;
+  border-radius: 18px;
+  padding: 14px 22px;
   font-family: "Nunito", "Segoe UI", sans-serif;
   font-weight: 800;
   font-size: clamp(1.35rem, 3vw, 2.15rem);
   line-height: 1.25;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 .q-media {
   width: min(720px, calc(100% - 48px));
@@ -724,6 +786,8 @@ textarea { min-height: 90px; resize: vertical; }
     linear-gradient(180deg, #12305f, #071422);
 }
 .q-media .ring { position: absolute; right: 12px; bottom: 12px; background: rgba(255,255,255,0.92); border-radius: 50%; }
+.ring.urgent { animation: timer-pulse 0.55s ease-in-out infinite; }
+@keyframes timer-pulse { 50% { transform: scale(1.08); } }
 .q-count {
   position: absolute;
   left: 12px;
@@ -747,6 +811,7 @@ textarea { min-height: 90px; resize: vertical; }
 .q-tile {
   position: relative;
   border: 0;
+  border-radius: 12px;
   color: white;
   min-height: 16vh;
   display: grid;
@@ -755,6 +820,7 @@ textarea { min-height: 90px; resize: vertical; }
   font-weight: 800;
   font-size: clamp(1.2rem, 3vw, 2rem);
   padding: 18px 48px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.16);
 }
 .q-tile.red { background: #e21b3c; }
 .q-tile.blue { background: #1368ce; }

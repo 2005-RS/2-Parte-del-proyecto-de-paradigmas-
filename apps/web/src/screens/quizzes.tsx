@@ -51,7 +51,7 @@ export function HomePage() {
       <motion.div className="hub-hero" initial={{ opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0.35 }}>
         <div>
           <p className="hub-kicker">Academia en vivo</p>
-          <h1>Elige la actividad, {user?.displayName?.split(' ')[0]}</h1>
+          <h1>Elige la actividad, {user?.displayName}</h1>
           <p>Link abre la sala. El grupo entra con el PIN o el QR, como una clase de ProfeLink.</p>
         </div>
         <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>

@@ -7,32 +7,57 @@ import { LinkMascot, Logo } from '../brand';
 import { Character, Trophy } from '../characters';
 import { mediaUrl } from '../config';
 import { useClock, useLiveSession } from '../live';
-import { musicMuted, playCorrect, playGo, playJoin, playPodium, playTick, playWrong, setMusicMuted, startLobbyMusic, stopMusic } from '../sfx';
+import { musicMuted, playCorrect, playGo, playJoin, playLock, playPodium, playTick, playTimesUp, playTock, playWrong, setMusicMuted, startLobbyMusic, startQuestionBed, stopMusic, stopQuestionBed } from '../sfx';
+
+function guestStamp() {
+  const bytes = new Uint8Array(6);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256);
+    }
+  }
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function guestAccount(displayName: string) {
+  const stamp = guestStamp();
+  return {
+    displayName: displayName.trim(),
+    email: `jugador.${stamp}@profelink.dev`,
+    password: `Juega${stamp}!`,
+  };
+}
 
 export function JoinPage() {
-  const { token, user } = useAuth();
+  const { token, user, enter } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [code, setCode] = useState((params.get('pin') || '').toUpperCase());
+  const pinFromQr = (params.get('pin') || '').toUpperCase();
+  const [code, setCode] = useState(pinFromQr);
+  const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const auto = useRef(false);
 
-  useEffect(() => {
-    const pin = (params.get('pin') || '').toUpperCase();
-    if (!token || pin.length !== 6 || auto.current) return;
-    auto.current = true;
+  async function joinByName(event: FormEvent) {
+    event.preventDefault();
+    const pin = pinFromQr.trim().toUpperCase();
     setPending(true);
-    api
-      .join(token, pin)
-      .then(() => {
-        sessionStorage.setItem('profelink.room', pin);
-        playJoin();
-        navigate(`/jugar/${pin}`);
-      })
-      .catch((reason: Error) => setError(reason.message))
-      .finally(() => setPending(false));
-  }, [params, token, navigate]);
+    setError(null);
+    try {
+      const result = await api.register(guestAccount(name));
+      enter(result.accessToken, result.user);
+      await api.join(result.accessToken, pin);
+      sessionStorage.setItem('profelink.room', pin);
+      playJoin();
+      navigate(`/jugar/${pin}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'No se pudo entrar a la sala.');
+    } finally {
+      setPending(false);
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -52,6 +77,40 @@ export function JoinPage() {
     }
   }
 
+  if (pinFromQr.length === 6) {
+    return (
+      <section className="stage">
+        <Blobs />
+        <div className="stage-inner">
+          <form className="pin-card name-join" onSubmit={joinByName}>
+            <p>Sala {formatPin(pinFromQr)}</p>
+            <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>
+              <Character name={name || 'Jugador'} size={108} />
+            </motion.div>
+            <h1>¿Cómo te llamas?</h1>
+            <p className="lede">Escribe tu nombre y entras a la partida. No hace falta correo.</p>
+            {error && <div className="banner">{error}</div>}
+            <label>
+              Tu nombre
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                minLength={2}
+                maxLength={40}
+                placeholder="Ana"
+                autoFocus
+                required
+              />
+            </label>
+            <button className="go" disabled={pending || name.trim().length < 2}>
+              {pending ? 'Entrando…' : 'Entrar a la partida'}
+            </button>
+          </form>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="stage">
       <Blobs />
@@ -63,8 +122,9 @@ export function JoinPage() {
         <form className="pin-card" onSubmit={onSubmit}>
           <p>Código del juego</p>
           <h1>Entra a la sala</h1>
-          <p className="lede">{user?.displayName}, escribe el código que está proyectando el profesor.</p>
+          <p className="lede">{user?.displayName ? `${user.displayName}, escribe` : 'Escribe'} el código que está proyectando el profesor.</p>
           {error && <div className="banner">{error}</div>}
+          {!token && <p className="lede">Para usar un código a mano, primero entra con tu perfil.</p>}
           <label>
             Código
             <input
@@ -77,7 +137,8 @@ export function JoinPage() {
               style={{ fontSize: '2rem', letterSpacing: '0.28em', textAlign: 'center', textTransform: 'uppercase' }}
             />
           </label>
-          <button className="go" disabled={pending}>{pending ? 'Entrando…' : 'Unirme'}</button>
+          <button className="go" disabled={pending || !token}>{pending ? 'Entrando…' : 'Unirme'}</button>
+          {!token && <Link className="gate-switch" to="/entrar">Entrar con mi perfil</Link>}
         </form>
       </div>
     </section>
@@ -92,17 +153,7 @@ export function HostPage() {
   const [pending, setPending] = useState(false);
   const [muted, setMuted] = useState(musicMuted);
   useJoinPops(live.state?.playerCount ?? 0);
-  useEffect(() => {
-    const status = live.state?.status;
-    if (muted) {
-      stopMusic();
-      return;
-    }
-    if (status === 'lobby') startLobbyMusic();
-    else if (status === 'finished') playPodium();
-    else stopMusic();
-    return () => stopMusic();
-  }, [live.state?.status, muted]);
+  useRoomSound(live.state?.status, muted);
 
   async function run(action: () => Promise<SessionState | void>) {
     setPending(true);
@@ -145,9 +196,10 @@ export function HostPage() {
               setMuted(next);
               setMusicMuted(next);
               if (!next && state?.status === 'lobby') startLobbyMusic();
+              if (!next && state?.status === 'question_open') startQuestionBed();
             }}
           >
-            {muted ? 'Música off' : 'Música on'}
+            {muted ? 'Sonido off' : 'Sonido on'}
           </button>
         </div>
         {live.error && <div className="banner">{live.error}</div>}
@@ -166,15 +218,20 @@ export function HostPage() {
               </div>
               <div>
                 <p>PIN de juego</p>
-                <div className="pin">{formatPin(state.code)}</div>
+                <div className="pin">{pinDigits(state.code)}</div>
               </div>
               <RoomQr value={`${window.location.origin}/jugar?pin=${state.code}`} />
             </motion.div>
-            <div className="wordmark">
+            <motion.div
+              className="wordmark"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', bounce: 0.4 }}
+            >
               <Logo size={64} />
               <span>ProfeLink</span>
-              <small>La actividad en vivo de tu academia</small>
-            </div>
+              <small>Sala de {state.hostName}</small>
+            </motion.div>
             <Roster state={state} />
             <div className="scene-actions">
               <button className="empezar" disabled={pending || state.playerCount === 0} onClick={() => { playGo(); void run(() => api.start(token, code)); }}>
@@ -209,6 +266,8 @@ export function PlayPage() {
   const { code = '' } = useParams();
   const live = useLiveSession(code, token || '', 'player');
   const [pending, setPending] = useState(false);
+  const [muted, setMuted] = useState(musicMuted);
+  useRoomSound(live.state?.status, muted);
 
   async function answer(value: boolean) {
     if (!token || !live.state?.question) return;
@@ -216,6 +275,7 @@ export function PlayPage() {
     live.setError(null);
     try {
       live.setState(await api.answer(token, code, live.state.question.id, value));
+      playLock();
     } catch (reason) {
       live.setError(reason instanceof Error ? reason.message : 'No se pudo enviar la respuesta.');
     } finally {
@@ -237,22 +297,43 @@ export function PlayPage() {
         <div className="play-top">
           <Link className="exit" to="/jugar">Salir</Link>
           <Connection connected={live.connected} />
-          <span className="you-chip">
+          <span className="you-chip player-card">
             <Character name={user?.displayName || 'Jugador'} size={36} />
-            <strong>{user?.displayName} · {state?.yourScore ?? 0} pts</strong>
+            <span className="player-id">
+              <strong>{user?.displayName}</strong>
+              <small>{state?.yourScore ?? 0} pts</small>
+            </span>
           </span>
+          <button
+            className="exit"
+            type="button"
+            onClick={() => {
+              const next = !muted;
+              setMuted(next);
+              setMusicMuted(next);
+              if (!next && state?.status === 'lobby') startLobbyMusic();
+              if (!next && state?.status === 'question_open') startQuestionBed();
+            }}
+          >
+            {muted ? 'Sonido off' : 'Sonido on'}
+          </button>
         </div>
         {live.error && <div className="banner">{live.error}</div>}
         {!state && <p>Buscando la sala…</p>}
         {state?.status === 'lobby' && (
-          <div className="pin-card waiting-player">
-            <motion.div animate={{ y: [0, -14, 0], rotate: [-4, 4, -4] }} transition={{ duration: 1.6, repeat: Infinity }}>
+          <motion.div
+            className="pin-card waiting-player"
+            initial={{ opacity: 0, y: 30, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: 'spring', bounce: 0.42 }}
+          >
+            <motion.div animate={{ y: [0, -16, 0], rotate: [-6, 6, -6] }} transition={{ duration: 1.5, repeat: Infinity }}>
               <Character name={user?.displayName || 'Jugador'} size={120} />
             </motion.div>
             <p>Estás dentro</p>
             <h1>{user?.displayName}</h1>
-            <p>Mira la pantalla del profesor. La pregunta llegará sola.</p>
-          </div>
+            <p>Sala de {state.hostName}. Mira la pantalla. La pregunta llega sola.</p>
+          </motion.div>
         )}
         {answering && state && (
           <QuestionView state={state} player onAnswer={answer} locked={locked} />
@@ -261,11 +342,16 @@ export function PlayPage() {
           <QuestionView state={state} player />
         )}
         {state?.status === 'question_open' && state.question?.yourAnswer !== null && (
-          <div className="locked-in">
+          <motion.div
+            className="locked-in"
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', bounce: 0.55 }}
+          >
             <div className="shapes" aria-hidden="true"><i /><i /><i /><i /></div>
-            <h1>¡Listo!</h1>
+            <motion.h1 animate={{ scale: [1, 1.12, 1], rotate: [0, -3, 3, 0] }} transition={{ duration: 0.7 }}>¡Listo!</motion.h1>
             <p>Respuesta enviada. Espera el cierre.</p>
-          </div>
+          </motion.div>
         )}
         {state?.status === 'finished' && <PrizeScreen state={state} />}
       </div>
@@ -389,17 +475,26 @@ function QuestionView({
   ];
   return (
     <article className="q-board" key={question.id}>
-      <header className="q-ask">
+      <motion.header
+        className="q-ask"
+        initial={{ opacity: 0, y: -24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', bounce: 0.35 }}
+      >
         <p>Pregunta {question.index + 1} de {question.total}</p>
         <h1>{question.prompt}</h1>
-      </header>
-      <div className="q-media">
+      </motion.header>
+      <motion.div className="q-media" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.28, delay: 0.05 }}>
         {image ? <img src={image} alt="" /> : <div className="q-placeholder" />}
         {state.status === 'question_open' && <Ring ratio={ratio} seconds={seconds} />}
-        {!player && state.status === 'question_open' && <span className="q-count">{question.answeredCount}</span>}
-      </div>
+        {!player && state.status === 'question_open' && (
+          <motion.span className="q-count" key={question.answeredCount} initial={{ scale: 0.6 }} animate={{ scale: 1 }}>
+            {question.answeredCount}
+          </motion.span>
+        )}
+      </motion.div>
       <div className="q-grid">
-        {tiles.map((tile) => {
+        {tiles.map((tile, index) => {
           const interactive = tile.value !== null && !!onAnswer;
           const picked = tile.value !== null && question.yourAnswer === tile.value;
           const win = revealed && tile.value !== null && question.correctAnswer === tile.value;
@@ -411,20 +506,38 @@ function QuestionView({
               {tile.label && <span>{tile.label}</span>}
             </>
           );
+          const entrance = {
+            initial: { opacity: 0, y: 48, scale: 0.9 },
+            animate: { opacity: 1, y: 0, scale: 1 },
+            transition: { type: 'spring' as const, bounce: 0.46, delay: 0.08 + index * 0.06 },
+          };
           if (!interactive) {
-            return <div className={className} key={tile.color}>{body}</div>;
+            return <motion.div className={className} key={tile.color} {...entrance}>{body}</motion.div>;
           }
           return (
-            <button key={tile.color} className={className} type="button" disabled={locked} onClick={() => { if (tile.value !== null) onAnswer?.(tile.value); }}>
+            <motion.button
+              key={tile.color}
+              className={className}
+              type="button"
+              disabled={locked}
+              onClick={() => { if (tile.value !== null) onAnswer?.(tile.value); }}
+              whileHover={locked ? undefined : { scale: 1.035, y: -4 }}
+              whileTap={locked ? undefined : { scale: 0.96 }}
+              {...entrance}
+            >
               {body}
-            </button>
+            </motion.button>
           );
         })}
       </div>
       {player && revealed && question.yourAnswer !== null && (
-        <p className="q-result">{question.yourAnswer === question.correctAnswer ? '¡Correcto! +1' : 'Esta vez no suma'}</p>
+        <motion.p className="q-result" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+          {question.yourAnswer === question.correctAnswer ? '¡Correcto! +1' : 'Esta vez no suma'}
+        </motion.p>
       )}
-      {player && revealed && question.yourAnswer === null && <p className="q-result">Se acabó el tiempo</p>}
+      {player && revealed && question.yourAnswer === null && (
+        <motion.p className="q-result" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>Se acabó el tiempo</motion.p>
+      )}
       {!player && state.status !== 'question_open' && <People state={state} />}
     </article>
   );
@@ -435,11 +548,16 @@ function People({ state }: { state: SessionState }) {
   return (
     <ul className="avatars">
       {state.players.map((player, index) => (
-        <li key={`${player.displayName}-${index}`}>
+        <motion.li
+          key={`${player.displayName}-${index}`}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.04 }}
+        >
           <Character name={player.displayName} size={42} />
           <span>{player.displayName}</span>
-          <strong>{player.score}</strong>
-        </li>
+          <motion.strong key={player.score} initial={{ scale: 1.4 }} animate={{ scale: 1 }}>{player.score}</motion.strong>
+        </motion.li>
       ))}
     </ul>
   );
@@ -500,13 +618,20 @@ function PrizeScreen({ state }: { state: SessionState }) {
 
 function PodiumSlot({ row, tone }: { row: { place: number; displayName: string; score: number }; tone: string }) {
   return (
-    <article className={tone}>
-      <Trophy place={row.place} />
-      <Character name={row.displayName} size={92} />
+    <motion.article
+      className={tone}
+      initial={{ opacity: 0, y: 140 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', bounce: 0.45, delay: row.place === 1 ? 0.15 : row.place === 2 ? 0.05 : 0.28 }}
+    >
+      <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 1.6, repeat: Infinity, delay: row.place * 0.1 }}>
+        <Trophy place={row.place} />
+        <Character name={row.displayName} size={92} />
+      </motion.div>
       <b>{row.place}</b>
       <div>{row.displayName}</div>
       <strong>{row.score} pts</strong>
-    </article>
+    </motion.article>
   );
 }
 
@@ -538,6 +663,20 @@ function Garland() {
 
 function formatPin(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
+}
+
+function pinDigits(code: string) {
+  const shown = `${code.slice(0, 3)} ${code.slice(3)}`;
+  return shown.split('').map((char, index) => (
+    <motion.span
+      key={`${char}-${index}`}
+      initial={{ opacity: 0, y: -18, scale: 0.6 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', bounce: 0.55, delay: index * 0.05 }}
+    >
+      {char}
+    </motion.span>
+  ));
 }
 
 function Ring({ ratio, seconds }: { ratio: number; seconds: number }) {
@@ -608,6 +747,7 @@ function useCountdown(active: boolean, seconds: number) {
     if (previous.current === seconds) return;
     previous.current = seconds;
     if (seconds > 0 && seconds <= 5) playTick();
+    else if (seconds > 5 && seconds <= 12) playTock();
   }, [active, seconds]);
 }
 
@@ -616,8 +756,37 @@ function useHostReveal(enabled: boolean, questionId: string, status: string) {
   useEffect(() => {
     if (!enabled || status !== 'question_closed' || played.current === questionId) return;
     played.current = questionId;
-    playGo();
+    playTimesUp();
   }, [enabled, questionId, status]);
+}
+
+function useRoomSound(status: string | undefined, muted: boolean) {
+  useEffect(() => {
+    if (!status) return undefined;
+    if (muted) {
+      stopMusic();
+      stopQuestionBed();
+      return undefined;
+    }
+    if (status === 'lobby') {
+      stopQuestionBed();
+      startLobbyMusic();
+    } else if (status === 'question_open') {
+      stopMusic();
+      startQuestionBed();
+    } else if (status === 'finished') {
+      stopQuestionBed();
+      stopMusic();
+      playPodium();
+    } else {
+      stopMusic();
+      stopQuestionBed();
+    }
+    return () => {
+      stopMusic();
+      stopQuestionBed();
+    };
+  }, [status, muted]);
 }
 
 function usePlayerVerdict(questionId: string, tone: 'win' | 'lose' | 'miss') {
